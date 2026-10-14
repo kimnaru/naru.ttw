@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min's Travel Log</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        .hero-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=2021&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .image-hover-zoom {
+            overflow: hidden;
+        }
+        .image-hover-zoom img {
+            transition: transform 0.5s ease;
+        }
+        .image-hover-zoom:hover img {
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-enter {
+            animation: slideUp 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 text-gray-800 antialiased selection:bg-brand-500 selection:text-white relative">
+
+    <nav class="fixed w-full z-50 transition-all duration-300 bg-transparent py-2" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0">
+                    <a href="#" onclick="showMain(event)" class="font-serif text-2xl font-bold tracking-wider text-white transition-colors" id="logo-text">
+                        Wanderlust.
+                    </a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#home" onclick="showMain(event)" class="nav-link text-white hover:text-brand-100 px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</a>
+                        <a href="#destinations" onclick="showMain(event, '#destinations')" class="nav-link text-white hover:text-brand-100 px-3 py-2 rounded-md text-sm font-medium transition-colors">Destinations</a>
+                        <a href="#journal" onclick="showMain(event, '#journal')" class="nav-link text-white hover:text-brand-100 px-3 py-2 rounded-md text-sm font-medium transition-colors">Journal</a>
+                        <a href="#about" onclick="showMain(event, '#about')" class="nav-link text-white hover:text-brand-100 px-3 py-2 rounded-md text-sm font-medium transition-colors">About Me</a>
+                        <a href="#" onclick="showMyPage(event)" class="nav-link text-white hover:text-brand-100 px-3 py-2 rounded-md text-sm font-medium transition-colors border border-white/30 bg-black/10"><i class="fas fa-user-circle mr-1"></i>My Page</a>
+                        <button onclick="openSearch()" class="nav-link text-white hover:text-brand-100 px-3 py-2 rounded-md text-sm font-medium transition-colors ml-2"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                <!-- Mobile menu & search buttons -->
+                <div class="md:hidden flex items-center space-x-3">
+                    <button onclick="openSearch()" class="mobile-nav-icon text-white hover:text-gray-300 focus:outline-none p-1 transition-colors">
+                        <i class="fas fa-search text-xl"></i>
+                    </button>
+                    <button id="mobile-menu-btn" class="mobile-nav-icon text-white hover:text-gray-300 focus:outline-none p-1 transition-colors">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-xl absolute w-full transition-all">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-100">
+                <a href="#home" onclick="showMain(event)" class="block px-3 py-2 text-base font-medium text-gray-800 hover:bg-gray-100 rounded-md">Home</a>
+                <a href="#destinations" onclick="showMain(event, '#destinations')" class="block px-3 py-2 text-base font-medium text-gray-800 hover:bg-gray-100 rounded-md">Destinations</a>
+                <a href="#journal" onclick="showMain(event, '#journal')" class="block px-3 py-2 text-base font-medium text-gray-800 hover:bg-gray-100 rounded-md">Journal</a>
+                <a href="#about" onclick="showMain(event, '#about')" class="block px-3 py-2 text-base font-medium text-gray-800 hover:bg-gray-100 rounded-md">About Me</a>
+                <a href="#" onclick="showMyPage(event)" class="block px-3 py-2 text-base font-medium text-brand-500 hover:bg-gray-100 rounded-md"><i class="fas fa-user-circle mr-1"></i>My Page</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="main-content">
+        <!-- Hero Section -->
+        <section id="home" class="hero-bg h-screen flex items-center justify-center relative">
+            <div class="text-center px-4 max-w-4xl mx-auto z-10">
+                <h1 class="text-5xl md:text-7xl font-serif text-white font-bold mb-6 drop-shadow-lg">
+                    Discover the World <br/><span class="italic font-light">With Me</span>
+                </h1>
+                <p class="text-lg md:text-xl text-gray-200 mb-10 max-w-2xl mx-auto font-light drop-shadow-md">
+                    세상 곳곳에 숨겨진 아름다움을 찾아 떠나는 여정. 저의 여행 기록과 사진들을 공유합니다.
+                </p>
+                <a href="#destinations" class="inline-block bg-brand-500 hover:bg-brand-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                    Explore Now
+                </a>
+            </div>
+            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <a href="#destinations" class="text-white opacity-75 hover:opacity-100">
+                    <i class="fas fa-chevron-down text-3xl"></i>
+                </a>
+            </div>
+        </section>
+
+        <!-- Destinations Section -->
+        <section id="destinations" class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-sm font-semibold text-brand-500 tracking-widest uppercase mb-2">Featured Places</h2>
+                    <h3 class="text-3xl md:text-4xl font-serif font-bold text-gray-900">최근 다녀온 여행지</h3>
+                    <div class="w-24 h-1 bg-brand-500 mx-auto mt-6 mb-6 rounded"></div>
+                </div>
+
+                <div id="destinations-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Gallery Item 1 -->
+                    <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer group destination-item" onclick="openModal('Swiss Alps', '알프스의 웅장한 대자연 속에서 보낸 일주일. 융프라우의 만년설과 하이킹 코스는 잊을 수 없는 추억이 되었습니다. 맑은 공기와 웅장한 풍경이 마음을 사로잡습니다.', 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', 'Jungfraujoch, Switzerland', 'Oct 2025', 'Switzerland')">
+                        <div class="h-64 image-hover-zoom relative">
+                            <img src="https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Swiss Alps" class="w-full h-full object-cover">
+                            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-700 shadow-sm"><i class="fas fa-map-marker-alt mr-1"></i>Jungfraujoch</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">Switzerland</span>
+                                <span class="text-sm text-gray-500"><i class="far fa-calendar-alt mr-1"></i> Oct 2025</span>
+                            </div>
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Swiss Alps</h4>
+                            <p class="text-gray-600 line-clamp-2">알프스의 웅장한 대자연 속에서 보낸 일주일. 융프라우의 만년설과 하이킹 코스는 잊을 수 없는 추억이 되었습니다.</p>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 2 -->
+                    <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer group destination-item" onclick="openModal('Kyoto in Autumn', '교토의 가을은 붉게 물든 단풍으로 절정을 이룹니다. 기요미즈데라와 고즈넉한 골목길을 거닐며 일본의 정취를 온전히 느꼈습니다. 전통 차 한잔의 여유도 잊지 마세요.', 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', 'Kiyomizu-dera, Kyoto', 'Nov 2025', 'Japan')">
+                        <div class="h-64 image-hover-zoom relative">
+                            <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Kyoto" class="w-full h-full object-cover">
+                            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-700 shadow-sm"><i class="fas fa-map-marker-alt mr-1"></i>Kiyomizu-dera</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">Japan</span>
+                                <span class="text-sm text-gray-500"><i class="far fa-calendar-alt mr-1"></i> Nov 2025</span>
+                            </div>
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Kyoto in Autumn</h4>
+                            <p class="text-gray-600 line-clamp-2">교토의 가을은 붉게 물든 단풍으로 절정을 이룹니다. 기요미즈데라와 고즈넉한 골목길을 거닐며 일본의 정취를 느꼈습니다.</p>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 3 -->
+                    <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer group destination-item" onclick="openModal('Santorini Sunset', '에게해의 푸른 바다와 하얀 집들이 어우러진 산토리니. 이아 마을에서 바라본 세계 3대 석양은 평생 잊지 못할 낭만적인 순간이었습니다.', 'https://images.unsplash.com/photo-1469796466635-455ede028aca?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', 'Oia, Santorini', 'Jun 2026', 'Greece')">
+                        <div class="h-64 image-hover-zoom relative">
+                            <img src="https://images.unsplash.com/photo-1469796466635-455ede028aca?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Santorini" class="w-full h-full object-cover">
+                            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-700 shadow-sm"><i class="fas fa-map-marker-alt mr-1"></i>Oia</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">Greece</span>
+                                <span class="text-sm text-gray-500"><i class="far fa-calendar-alt mr-1"></i> Jun 2026</span>
+                            </div>
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Santorini Sunset</h4>
+                            <p class="text-gray-600 line-clamp-2">에게해의 푸른 바다와 하얀 집들이 어우러진 산토리니. 이아 마을에서 바라본 세계 3대 석양은 평생 잊지 못할 것입니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Journal Section -->
+        <section id="journal" class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+                    <div>
+                        <h2 class="text-sm font-semibold text-brand-500 tracking-widest uppercase mb-2">Travel Stories</h2>
+                        <h3 class="text-3xl md:text-4xl font-serif font-bold text-gray-900">여행 일기</h3>
+                    </div>
+                </div>
+
+                <div id="journal-list" class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <!-- Journal Post 1 -->
+                    <article class="journal-item flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="sm:w-2/5 h-48 sm:h-auto overflow-hidden relative cursor-pointer" onclick="openModal('파리 로컬 카페 투어 가이드', '관광객들로 붐비는 샹젤리제 거리를 벗어나 마레 지구의 골목길에 숨겨진 로컬 카페들을 찾아 나섰습니다. 바리스타의 정성이 담긴 에스프레소 한 잔의 여유, 파리지앵처럼 하루를 시작하는 방법을 소개합니다.', 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', 'Le Marais, Paris', 'Oct 10, 2026', 'Travel Stories')">
+                            <img src="https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Coffee" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                            <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white"><i class="fas fa-map-marker-alt mr-1"></i>Le Marais</div>
+                        </div>
+                        <div class="sm:w-3/5 p-6 flex flex-col justify-center">
+                            <span class="text-xs text-gray-500 mb-2">Oct 10, 2026 • Travel Stories</span>
+                            <h4 class="text-xl font-bold text-gray-900 mb-3 hover:text-brand-500 cursor-pointer transition-colors" onclick="openModal('파리 로컬 카페 투어 가이드', '관광객들로 붐비는 샹젤리제 거리를 벗어나 마레 지구의 골목길에 숨겨진 로컬 카페들을 찾아 나섰습니다. 바리스타의 정성이 담긴 에스프레소 한 잔의 여유, 파리지앵처럼 하루를 시작하는 방법을 소개합니다.', 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', 'Le Marais, Paris', 'Oct 10, 2026', 'Travel Stories')">파리 로컬 카페 투어 가이드</h4>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-3">관광객들로 붐비는 샹젤리제 거리를 벗어나 마레 지구의 골목길에 숨겨진 로컬 카페들을 찾아 나섰습니다. 바리스타의 정성이 담긴 에스프레소 한 잔...</p>
+                        </div>
+                    </article>
+
+                    <!-- Journal Post 2 -->
+                    <article class="journal-item flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="sm:w-2/5 h-48 sm:h-auto overflow-hidden relative cursor-pointer" onclick="openModal('프로 여행러의 짐싸기 꿀팁', '매번 여행갈 때마다 캐리어가 터질 것 같나요? 미니멀리즘 여행을 추구하는 제가 실전에서 깨달은 효율적인 수납 방법과 꼭 챙겨야 할 필수템 리스트를 대공개합니다. 가벼운 짐은 여행의 질을 높여줍니다.', 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', 'Incheon International Airport', 'Sep 25, 2026', 'Tips')">
+                            <img src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Packing" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                            <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white"><i class="fas fa-map-marker-alt mr-1"></i>Incheon Airport</div>
+                        </div>
+                        <div class="sm:w-3/5 p-6 flex flex-col justify-center">
+                            <span class="text-xs text-gray-500 mb-2">Sep 25, 2026 • Tips</span>
+                            <h4 class="text-xl font-bold text-gray-900 mb-3 hover:text-brand-500 cursor-pointer transition-colors" onclick="openModal('프로 여행러의 짐싸기 꿀팁', '매번 여행갈 때마다 캐리어가 터질 것 같나요? 미니멀리즘 여행을 추구하는 제가 실전에서 깨달은 효율적인 수납 방법과 꼭 챙겨야 할 필수템 리스트를 대공개합니다. 가벼운 짐은 여행의 질을 높여줍니다.', 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', 'Incheon International Airport', 'Sep 25, 2026', 'Tips')">프로 여행러의 짐싸기 꿀팁</h4>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-3">매번 여행갈 때마다 캐리어가 터질 것 같나요? 미니멀리즘 여행을 추구하는 제가 실전에서 깨달은 효율적인 수납 방법과 필수템 리스트를 대공개합니다.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-20 bg-white">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-brand-50 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-10">
+                    <div class="md:w-1/3 relative">
+                        <div class="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto relative z-10">
+                            <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Profile" class="w-full h-full object-cover">
+                        </div>
+                        <div class="absolute top-0 -left-4 w-full h-full bg-brand-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 z-0"></div>
+                    </div>
+                    
+                    <div class="md:w-2/3 text-center md:text-left z-10">
+                        <h2 class="text-3xl font-serif font-bold text-gray-900 mb-4">Hello, I'm Min.</h2>
+                        <p class="text-gray-600 mb-6 leading-relaxed">
+                            안녕하세요! 새로운 문화를 경험하고 낯선 거리를 걷는 것을 사랑하는 여행자입니다. 
+                            평범한 직장인이지만, 틈날 때마다 배낭을 메고 세계 곳곳을 누비며 기록을 남기고 있습니다. 
+                            제 사진과 이야기가 누군가의 다음 여행에 작은 영감이 되기를 바랍니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div> <!-- End of main-content -->
+
+    <div id="mypage-content" class="hidden min-h-screen pt-28 pb-20 bg-gray-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-10 border-b border-gray-200 pb-6 flex items-center gap-4">
+                <i class="fas fa-user-circle text-4xl text-brand-500"></i>
+                <div>
+                    <h2 class="text-3xl font-serif font-bold text-gray-900">My Page</h2>
+                    <p class="text-gray-500 mt-1">여행지 및 일기 항목을 관리하고 추가할 수 있습니다.</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col items-center text-center hover:shadow-md transition-shadow">
+                    <div class="w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center text-brand-500 text-2xl mb-4">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">여행지 갤러리 관리</h3>
+                    <p class="text-gray-500 text-sm mb-6">새로운 여행지 사진과 간단한 설명을 갤러리 섹션에 추가합니다.</p>
+                    <button onclick="openAddModal('destination')" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-medium transition-colors shadow-sm mt-auto focus:outline-none">
+                        <i class="fas fa-plus mr-2"></i> 새 여행지 추가
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col items-center text-center hover:shadow-md transition-shadow">
+                    <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-800 text-2xl mb-4">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">여행 일기 관리</h3>
+                    <p class="text-gray-500 text-sm mb-6">다녀온 여행의 상세한 이야기와 기록을 일기 목록에 추가합니다.</p>
+                    <button onclick="openAddModal('journal')" class="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white rounded-xl font-medium transition-colors shadow-sm mt-auto focus:outline-none">
+                        <i class="fas fa-plus mr-2"></i> 새 일기 추가
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상세 보기 (블로그 포스트 화면) -->
+    <div id="detail-content" class="hidden min-h-screen pt-28 pb-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <button onclick="showMain(event)" class="text-brand-500 hover:text-brand-700 font-medium mb-8 flex items-center transition-colors focus:outline-none bg-brand-50 px-4 py-2 rounded-lg">
+                <i class="fas fa-arrow-left mr-2"></i> 목록으로 돌아가기
+            </button>
+            
+            <!-- 포스트 헤더 -->
+            <div class="mb-8">
+                <div class="flex items-center space-x-4 mb-4">
+                    <span id="detailTag" class="text-xs font-semibold text-brand-700 uppercase tracking-wider bg-brand-100 px-3 py-1 rounded-full">Tag</span>
+                    <span id="detailDate" class="text-sm text-gray-500"></span>
+                </div>
+                <h1 id="detailTitle" class="text-4xl md:text-5xl font-serif font-bold text-gray-900 leading-tight">제목이 들어갑니다</h1>
+            </div>
+            
+            <!-- 커버 이미지 -->
+            <div class="w-full h-[300px] md:h-[500px] rounded-3xl overflow-hidden mb-12 shadow-lg">
+                <img id="detailImg" src="" alt="Cover" class="w-full h-full object-cover">
+            </div>
+            
+            <!-- 본문 내용 -->
+            <div class="prose max-w-none text-gray-800 text-lg leading-relaxed mb-16 bg-gray-50 p-8 rounded-2xl border border-gray-100">
+                <p id="detailDesc" class="whitespace-pre-line"></p>
+            </div>
+            
+            <!-- 구글 맵 -->
+            <div id="detailMapContainer" class="hidden w-full h-96 rounded-2xl overflow-hidden shadow-md mb-12 border border-gray-200">
+                <div class="bg-gray-100 px-4 py-3 border-b border-gray-200 font-semibold text-gray-700">
+                    <i class="fas fa-map-marker-alt text-brand-500 mr-2"></i>Location
+                </div>
+                <iframe id="detailMapFrame" width="100%" height="100%" frameborder="0" style="border:0" allowfullscreen loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Summary Modal -->
+    <div id="imageModal" class="modal fixed inset-0 z-[100] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 opacity-0">
+        <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-gray-300 focus:outline-none z-50">
+            <i class="fas fa-times text-3xl drop-shadow-md"></i>
+        </button>
+        
+        <div class="max-w-5xl w-full flex flex-col md:flex-row bg-white rounded-2xl overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="modalContent">
+            <div class="md:w-3/5 h-64 md:h-[500px]">
+                <img id="modalImg" src="" alt="Modal Image" class="w-full h-full object-cover">
+            </div>
+            <div class="md:w-2/5 p-8 flex flex-col bg-gray-50 h-auto md:h-[500px] overflow-y-auto">
+                <h3 id="modalTitle" class="text-2xl font-serif font-bold text-gray-900 mb-4 flex-shrink-0"></h3>
+                <div class="w-12 h-1 bg-brand-500 mb-4 rounded flex-shrink-0"></div>
+                <div class="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-2" id="modalTag"></div>
+                
+                <!-- 개요 (요약본) -->
+                <p id="modalDesc" class="text-gray-600 leading-relaxed mb-6 flex-shrink-0"></p>
+                
+                <!-- 구글 맵 임베드 컨테이너 -->
+                <div id="modalMapContainer" class="hidden w-full h-40 rounded-xl overflow-hidden border border-gray-200 shadow-inner flex-shrink-0 mb-6">
+                    <iframe id="modalMapFrame" width="100%" height="100%" frameborder="0" style="border:0" allowfullscreen loading="lazy"></iframe>
+                </div>
+
+                <!-- 닫기 & 더보기 버튼 -->
+                <div class="mt-auto flex justify-between items-center w-full flex-shrink-0 pt-4 border-t border-gray-200">
+                    <button onclick="closeModal()" class="px-6 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 rounded-lg transition-colors text-sm font-medium focus:outline-none">
+                        닫기
+                    </button>
+                    <!-- 더보기 버튼 -->
+                    <button onclick="openDetailView()" class="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition-colors text-sm font-medium shadow-md focus:outline-none flex items-center">
+                        더보기 <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 transform scale-95 transition-transform duration-300" id="addItemModalContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="addModalTitle" class="text-2xl font-serif font-bold text-gray-900">항목 추가</h3>
+                <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="addItemForm" onsubmit="handleAddItemSubmit(event)">
+                <input type="hidden" id="itemType" value="">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">제목</label>
+                        <input type="text" id="inputTitle" required placeholder="예: 알프스 등반" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    
+                    <div id="countryField">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">국가/지역 카테고리</label>
+                        <input type="text" id="inputCountry" placeholder="예: Switzerland" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">장소 태그 (구글맵 검색어)</label>
+                        <input type="text" id="inputLocation" placeholder="예: 에펠탑, 파리" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">날짜 (예: Oct 2026)</label>
+                        <input type="text" id="inputDate" required placeholder="예: Oct 2026" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">이미지 URL</label>
+                        <input type="url" id="inputImage" required placeholder="https://images.unsplash.com/..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">상세 내용 (블로그 본문)</label>
+                        <textarea id="inputDesc" required rows="4" placeholder="여행에 대한 이야기를 길게 적어주세요." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none resize-none"></textarea>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-end space-x-3">
+                    <button type="button" onclick="closeAddModal()" class="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none">취소</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 shadow-md focus:outline-none">추가하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Search Overlay -->
+    <div id="searchOverlay" class="fixed top-0 left-0 w-full z-[60] hidden bg-white shadow-xl transform -translate-y-full transition-transform duration-300 flex items-center h-24 px-4 sm:px-6 lg:px-8 border-b-4 border-brand-500">
+        <div class="max-w-7xl mx-auto w-full flex items-center relative">
+            <i class="fas fa-search text-brand-500 text-2xl mr-4"></i>
+            <input type="text" id="searchInput" placeholder="어느 곳을 찾고 계신가요?" class="w-full bg-transparent text-xl md:text-3xl text-gray-800 placeholder-gray-300 focus:outline-none py-2 font-medium">
+            <button onclick="closeSearch()" class="text-gray-400 hover:text-gray-800 focus:outline-none ml-4 p-2">
+                <i class="fas fa-times text-2xl md:text-3xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span class="font-serif text-2xl font-bold tracking-wider block mb-2">Wanderlust.</span>
+            <p class="text-gray-400 text-sm">© 2026 Min's Travel Log. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 전역 상태 변수
+        let currentPage = 'home'; // 'home', 'mypage', 'detail'
+        let currentPostData = null; // 현재 열린 게시물 데이터를 저장
+
+        const navbar = document.getElementById('navbar');
+        const logoText = document.getElementById('logo-text');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileNavIcons = document.querySelectorAll('.mobile-nav-icon');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        // --- 네비게이션 스타일 ---
+        function updateNavbarStyle() {
+            if (window.scrollY > 50 || currentPage !== 'home') {
+                navbar.classList.add('bg-white', 'shadow-md');
+                navbar.classList.remove('bg-transparent', 'py-2');
+                logoText.classList.remove('text-white');
+                logoText.classList.add('text-brand-700');
+                navLinks.forEach(link => {
+                    if(!link.classList.contains('bg-black/10')) {
+                        link.classList.remove('text-white');
+                        link.classList.add('text-gray-800');
+                    }
+                });
+                mobileNavIcons.forEach(icon => {
+                    icon.classList.remove('text-white');
+                    icon.classList.add('text-gray-800');
+                });
+            } else {
+                navbar.classList.remove('bg-white', 'shadow-md');
+                navbar.classList.add('bg-transparent', 'py-2');
+                logoText.classList.add('text-white');
+                logoText.classList.remove('text-brand-700');
+                navLinks.forEach(link => {
+                    if(!link.classList.contains('bg-black/10')) {
+                        link.classList.add('text-white');
+                        link.classList.remove('text-gray-800');
+                    }
+                });
+                mobileNavIcons.forEach(icon => {
+                    icon.classList.add('text-white');
+                    icon.classList.remove('text-gray-800');
+                });
+            }
+        }
+        window.addEventListener('scroll', updateNavbarStyle);
+
+        // --- 페이지 라우팅 로직 ---
+        function showMain(e, targetId = null) {
+            if(e) e.preventDefault();
+            currentPage = 'home';
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('mypage-content').classList.add('hidden');
+            document.getElementById('detail-content').classList.add('hidden');
+            mobileMenu.classList.add('hidden');
+            updateNavbarStyle();
+
+            if(targetId) {
+                const target = document.querySelector(targetId);
+                if(target) window.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function showMyPage(e) {
+            if(e) e.preventDefault();
+            currentPage = 'mypage';
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('mypage-content').classList.remove('hidden');
+            document.getElementById('detail-content').classList.add('hidden');
+            mobileMenu.classList.add('hidden');
+            window.scrollTo(0, 0);
+            updateNavbarStyle();
+        }
+
+        mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+
+        function showCustomToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-medium toast-enter';
+            toast.innerHTML = `<i class="fas fa-info-circle mr-2 text-brand-500"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => container.contains(toast) && container.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        const imageModal = document.getElementById('imageModal');
+        const modalContent = document.getElementById('modalContent');
+
+        function openModal(title, desc, imgSrc, locationQuery = '', date = '', tag = '') {
+            // 현재 열린 데이터 저장 (더보기 버튼에서 사용)
+            currentPostData = { title, desc, imgSrc, locationQuery, date, tag };
+            
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalTag').textContent = tag || 'Story';
+            
+            // 모달에서는 설명(desc)을 요약본(개요)으로 잘라서 보여줌
+            const briefDesc = desc.length > 70 ? desc.substring(0, 70) + '...' : desc;
+            document.getElementById('modalDesc').textContent = briefDesc;
+            
+            document.getElementById('modalImg').src = imgSrc;
+            
+            const mapContainer = document.getElementById('modalMapContainer');
+            const mapFrame = document.getElementById('modalMapFrame');
+            if (locationQuery) {
+                mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(locationQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+                mapContainer.classList.remove('hidden');
+            } else {
+                mapContainer.classList.add('hidden');
+                mapFrame.src = '';
+            }
+            
+            imageModal.classList.remove('hidden');
+            void imageModal.offsetWidth;
+            imageModal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            imageModal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                imageModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+        
+        imageModal.addEventListener('click', (e) => { if (e.target === imageModal) closeModal(); });
+
+        function openDetailView() {
+            closeModal(); // 기존 요약 모달 닫기
+            
+            // 세부 내용 화면에 데이터 뿌리기
+            document.getElementById('detailTitle').textContent = currentPostData.title;
+            document.getElementById('detailDesc').textContent = currentPostData.desc; // 여기서는 원본(전체 글) 출력
+            document.getElementById('detailImg').src = currentPostData.imgSrc;
+            document.getElementById('detailTag').textContent = currentPostData.tag || 'Story';
+            document.getElementById('detailDate').innerHTML = `<i class="far fa-calendar-alt mr-1"></i> ${currentPostData.date || '최근'}`;
+            
+            const detailMapContainer = document.getElementById('detailMapContainer');
+            const detailMapFrame = document.getElementById('detailMapFrame');
+            if (currentPostData.locationQuery) {
+                detailMapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(currentPostData.locationQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+                detailMapContainer.classList.remove('hidden');
+            } else {
+                detailMapContainer.classList.add('hidden');
+                detailMapFrame.src = '';
+            }
+            
+            // 화면 전환
+            currentPage = 'detail';
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('mypage-content').classList.add('hidden');
+            document.getElementById('detail-content').classList.remove('hidden');
+            
+            window.scrollTo(0, 0); // 화면 최상단으로 이동
+            updateNavbarStyle(); // 네비게이션 스타일 조정
+        }
+
+        const addItemModal = document.getElementById('addItemModal');
+        const addItemModalContent = document.getElementById('addItemModalContent');
+
+        function openAddModal(type) {
+            document.getElementById('itemType').value = type;
+            document.getElementById('addItemForm').reset();
+            
+            if (type === 'destination') {
+                document.getElementById('addModalTitle').textContent = '새 여행지 추가';
+                document.getElementById('countryField').style.display = 'block';
+                document.getElementById('inputCountry').required = true;
+            } else {
+                document.getElementById('addModalTitle').textContent = '새 일기 추가';
+                document.getElementById('countryField').style.display = 'none';
+                document.getElementById('inputCountry').required = false;
+            }
+            
+            addItemModal.classList.remove('hidden');
+            void addItemModal.offsetWidth;
+            addItemModal.classList.remove('opacity-0');
+            addItemModalContent.classList.remove('scale-95');
+            addItemModalContent.classList.add('scale-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAddModal() {
+            addItemModal.classList.add('opacity-0');
+            addItemModalContent.classList.remove('scale-100');
+            addItemModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                addItemModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+
+        function handleAddItemSubmit(e) {
+            e.preventDefault();
+            const type = document.getElementById('itemType').value;
+            const title = document.getElementById('inputTitle').value;
+            const date = document.getElementById('inputDate').value;
+            const image = document.getElementById('inputImage').value;
+            const desc = document.getElementById('inputDesc').value;
+            const location = document.getElementById('inputLocation').value;
+            
+            if (type === 'destination') {
+                const country = document.getElementById('inputCountry').value;
+                const newItem = { title, country, date, image, desc, location };
+                const saved = JSON.parse(localStorage.getItem('myDestinations') || '[]');
+                saved.push(newItem);
+                localStorage.setItem('myDestinations', JSON.stringify(saved));
+                renderDestination(newItem);
+                showCustomToast('새로운 여행지가 갤러리에 추가되었습니다.');
+            } else {
+                const newItem = { title, date, image, desc, location, country: 'Story' };
+                const saved = JSON.parse(localStorage.getItem('myJournals') || '[]');
+                saved.push(newItem);
+                localStorage.setItem('myJournals', JSON.stringify(saved));
+                renderJournal(newItem);
+                showCustomToast('새로운 여행 일기가 추가되었습니다.');
+            }
+            
+            closeAddModal();
+            showMain(null, type === 'destination' ? '#destinations' : '#journal');
+        }
+
+        function renderDestination(item) {
+            const grid = document.getElementById('destinations-grid');
+            const safeTitle = item.title.replace(/'/g, "\\'");
+            const safeDesc = item.desc.replace(/'/g, "\\'");
+            const safeLocation = item.location ? item.location.replace(/'/g, "\\'") : '';
+            const safeDate = item.date.replace(/'/g, "\\'");
+            const safeTag = item.country.replace(/'/g, "\\'");
+            
+            const locationBadge = item.location ? `<div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-700 shadow-sm"><i class="fas fa-map-marker-alt mr-1"></i>${item.location}</div>` : '';
+            
+            const html = `
+                <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer group destination-item" onclick="openModal('${safeTitle}', '${safeDesc}', '${item.image}', '${safeLocation}', '${safeDate}', '${safeTag}')">
+                    <div class="h-64 image-hover-zoom relative">
+                        <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x600/e2e8f0/64748b?text=Image+Not+Found'">
+                        ${locationBadge}
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">${item.country}</span>
+                            <span class="text-sm text-gray-500"><i class="far fa-calendar-alt mr-1"></i> ${item.date}</span>
+                        </div>
+                        <h4 class="text-xl font-bold text-gray-900 mb-2">${item.title}</h4>
+                        <p class="text-gray-600 line-clamp-2">${item.desc}</p>
+                    </div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('afterbegin', html);
+        }
+
+        function renderJournal(item) {
+            const list = document.getElementById('journal-list');
+            const safeTitle = item.title.replace(/'/g, "\\'");
+            const safeDesc = item.desc.replace(/'/g, "\\'");
+            const safeLocation = item.location ? item.location.replace(/'/g, "\\'") : '';
+            const safeDate = item.date.replace(/'/g, "\\'");
+            
+            const html = `
+                <article class="journal-item flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                    <div class="sm:w-2/5 h-48 sm:h-auto overflow-hidden relative cursor-pointer" onclick="openModal('${safeTitle}', '${safeDesc}', '${item.image}', '${safeLocation}', '${safeDate}', 'Travel Story')">
+                        <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/600x600/e2e8f0/64748b?text=Image+Not+Found'">
+                        ${item.location ? `<div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white"><i class="fas fa-map-marker-alt mr-1"></i>${item.location}</div>` : ''}
+                    </div>
+                    <div class="sm:w-3/5 p-6 flex flex-col justify-center">
+                        <span class="text-xs text-gray-500 mb-2">${item.date} • New Post</span>
+                        <h4 class="text-xl font-bold text-gray-900 mb-3 hover:text-brand-500 cursor-pointer transition-colors" onclick="openModal('${safeTitle}', '${safeDesc}', '${item.image}', '${safeLocation}', '${safeDate}', 'Travel Story')">${item.title}</h4>
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">${item.desc}</p>
+                    </div>
+                </article>
+            `;
+            list.insertAdjacentHTML('afterbegin', html);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDestinations = JSON.parse(localStorage.getItem('myDestinations') || '[]');
+            savedDestinations.reverse().forEach(item => renderDestination(item));
+            
+            const savedJournals = JSON.parse(localStorage.getItem('myJournals') || '[]');
+            savedJournals.reverse().forEach(item => renderJournal(item));
+        });
+
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchInput = document.getElementById('searchInput');
+
+        function openSearch() {
+            if(currentPage !== 'home') showMain();
+            searchOverlay.classList.remove('hidden');
+            void searchOverlay.offsetWidth;
+            searchOverlay.classList.remove('-translate-y-full');
+            searchInput.value = '';
+            filterPosts('');
+            setTimeout(() => searchInput.focus(), 300);
+            mobileMenu.classList.add('hidden');
+        }
+
+        function closeSearch() {
+            searchOverlay.classList.add('-translate-y-full');
+            setTimeout(() => searchOverlay.classList.add('hidden'), 300);
+        }
+
+        searchInput.addEventListener('input', (e) => filterPosts(e.target.value.toLowerCase()));
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = e.target.value.trim();
+                closeSearch();
+                if (query) {
+                    showCustomToast(`'${query}' 검색 완료`);
+                    const target = document.querySelector('#destinations');
+                    if (target) window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
+                }
+            }
+        });
+
+        function filterPosts(query) {
+            document.querySelectorAll('.destination-item').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(query) ? '' : 'none';
+            });
+            document.querySelectorAll('.journal-item').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(query) ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!imageModal.classList.contains('hidden')) closeModal();
+                if (!addItemModal.classList.contains('hidden')) closeAddModal();
+                if (!searchOverlay.classList.contains('hidden')) closeSearch();
+            }
+        });
+    </script>
+</body>
+</html>
