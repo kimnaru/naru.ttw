@@ -320,6 +320,38 @@
                 </div>
                 <iframe id="detailMapFrame" width="100%" height="100%" frameborder="0" style="border:0" allowfullscreen loading="lazy"></iframe>
             </div>
+
+            <!-- 댓글 섹션 -->
+            <div class="mt-16 pt-10 border-t border-gray-200">
+                <h3 class="text-2xl font-serif font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <i class="far fa-comments text-brand-500"></i>
+                    댓글 <span id="detailCommentCount" class="text-brand-500 text-xl font-sans font-semibold">(0)</span>
+                </h3>
+
+                <!-- 댓글 작성 폼 -->
+                <form id="commentForm" onsubmit="handleCommentSubmit(event)" class="bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-10 shadow-sm">
+                    <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">작성자 이름</label>
+                            <input type="text" id="commentAuthor" required placeholder="이름 또는 닉네임" class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">댓글 내용</label>
+                        <textarea id="commentText" required rows="3" placeholder="소중한 의견이나 궁금한 점을 남겨주세요." class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm resize-none"></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl shadow-md transition-colors flex items-center gap-2">
+                            <i class="fas fa-paper-plane"></i> 댓글 등록
+                        </button>
+                    </div>
+                </form>
+
+                <!-- 댓글 목록 -->
+                <div id="detailCommentList" class="space-y-4">
+                    <!-- 댓글 카드들이 JS로 동적 삽입됨 -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -351,9 +383,11 @@
                     <button onclick="closeModal()" class="px-6 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 rounded-lg transition-colors text-sm font-medium focus:outline-none">
                         닫기
                     </button>
-                    <!-- 더보기 버튼 -->
-                    <button onclick="openDetailView()" class="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition-colors text-sm font-medium shadow-md focus:outline-none flex items-center">
-                        더보기 <i class="fas fa-arrow-right ml-2"></i>
+                    <!-- 더보기 버튼 및 댓글 배지 -->
+                    <button onclick="openDetailView()" class="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition-colors text-sm font-medium shadow-md focus:outline-none flex items-center gap-2">
+                        <span>상세보기</span>
+                        <span id="modalCommentBadge" class="bg-white/20 text-xs px-2 py-0.5 rounded-full font-sans"></span>
+                        <i class="fas fa-arrow-right text-xs"></i>
                     </button>
                 </div>
             </div>
@@ -419,364 +453,377 @@
             <i class="fas fa-search text-brand-500 text-2xl mr-4"></i>
             <input type="text" id="searchInput" placeholder="어느 곳을 찾고 계신가요?" class="w-full bg-transparent text-xl md:text-3xl text-gray-800 placeholder-gray-300 focus:outline-none py-2 font-medium">
             <button onclick="closeSearch()" class="text-gray-400 hover:text-gray-800 focus:outline-none ml-4 p-2">
-                <i class="fas fa-times text-2xl md:text-3xl"></i>
+                <i class="fas fa-times text-2xl"></i>
             </button>
         </div>
     </div>
 
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2"></div>
 
     <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12">
+    <footer class="bg-gray-900 text-white py-12 border-t border-gray-800 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <span class="font-serif text-2xl font-bold tracking-wider block mb-2">Wanderlust.</span>
-            <p class="text-gray-400 text-sm">© 2026 Min's Travel Log. All rights reserved.</p>
+            <h3 class="font-serif text-2xl font-bold mb-4 tracking-widest text-brand-500">Wanderlust.</h3>
+            <p class="text-gray-400 text-sm mb-6">세상 곳곳에 숨겨진 아름다움을 찾아 떠나는 여정.</p>
+            <div class="flex justify-center space-x-6 mb-8">
+                <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-instagram text-xl"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-twitter text-xl"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-youtube text-xl"></i></a>
+            </div>
+            <p class="text-gray-500 text-xs">&copy; 2026 Min's Travel Log. All rights reserved.</p>
         </div>
     </footer>
 
     <script>
-        // 전역 상태 변수
-        let currentPage = 'home'; // 'home', 'mypage', 'detail'
-        let currentPostData = null; // 현재 열린 게시물 데이터를 저장
+        let currentModalData = {};
 
-        const navbar = document.getElementById('navbar');
-        const logoText = document.getElementById('logo-text');
-        const navLinks = document.querySelectorAll('.nav-link');
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileNavIcons = document.querySelectorAll('.mobile-nav-icon');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        // --- 네비게이션 스타일 ---
-        function updateNavbarStyle() {
-            if (window.scrollY > 50 || currentPage !== 'home') {
-                navbar.classList.add('bg-white', 'shadow-md');
-                navbar.classList.remove('bg-transparent', 'py-2');
-                logoText.classList.remove('text-white');
-                logoText.classList.add('text-brand-700');
-                navLinks.forEach(link => {
-                    if(!link.classList.contains('bg-black/10')) {
-                        link.classList.remove('text-white');
-                        link.classList.add('text-gray-800');
-                    }
-                });
-                mobileNavIcons.forEach(icon => {
-                    icon.classList.remove('text-white');
-                    icon.classList.add('text-gray-800');
-                });
-            } else {
-                navbar.classList.remove('bg-white', 'shadow-md');
-                navbar.classList.add('bg-transparent', 'py-2');
-                logoText.classList.add('text-white');
-                logoText.classList.remove('text-brand-700');
-                navLinks.forEach(link => {
-                    if(!link.classList.contains('bg-black/10')) {
-                        link.classList.add('text-white');
-                        link.classList.remove('text-gray-800');
-                    }
-                });
-                mobileNavIcons.forEach(icon => {
-                    icon.classList.add('text-white');
-                    icon.classList.remove('text-gray-800');
-                });
-            }
+        // 댓글 데이터 저장소 (게시물 제목을 키로 사용)
+        const commentsData = {
+            'Swiss Alps': [
+                { id: 1, author: '이지은', text: '알프스 하이킹 정보 정말 유익해요! 10월 날씨는 옷차림을 어떻게 준비해야 하나요?', date: '2026.10.12', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80' },
+                { id: 2, author: '김철수', text: '사진만 봐도 가슴이 뻥 뚫리네요. 다음 여행지로 꼭 가봐야겠습니다!', date: '2026.10.13', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80' }
+            ],
+            'Kyoto in Autumn': [
+                { id: 3, author: '박수진', text: '교토 단풍철에 숙소 예약하기 진짜 어렵던데 팁 있으신가요?', date: '2026.11.02', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80' }
+            ],
+            '파리 로컬 카페 투어 가이드': [
+                { id: 4, author: '최민준', text: '마레 지구 로컬 카페 위치 저장해뒀습니다! 커피 향이 여기까지 나는 것 같아요.', date: '2026.10.11', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80' }
+            ]
+        };
+
+        // 네비게이션 바 색상 전환 로직 (마이페이지/상세보기 상태인지 확인)
+        function isDarkNavNeeded() {
+            return !document.getElementById('mypage-content').classList.contains('hidden') || 
+                   !document.getElementById('detail-content').classList.contains('hidden');
         }
-        window.addEventListener('scroll', updateNavbarStyle);
 
-        // --- 페이지 라우팅 로직 ---
+        // 스크롤 이벤트 및 네비게이션 강제 다크/투명 전환
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('bg-white', 'shadow-md', 'py-2');
+                nav.classList.remove('bg-transparent', 'py-4');
+                document.querySelectorAll('.nav-link').forEach(el => el.classList.replace('text-white', 'text-gray-800'));
+                document.getElementById('logo-text').classList.replace('text-white', 'text-brand-500');
+                document.querySelectorAll('.mobile-nav-icon').forEach(el => el.classList.replace('text-white', 'text-gray-800'));
+            } else {
+                if(!isDarkNavNeeded()) {
+                    nav.classList.add('bg-transparent', 'py-4');
+                    nav.classList.remove('bg-white', 'shadow-md', 'py-2');
+                    document.querySelectorAll('.nav-link').forEach(el => el.classList.replace('text-gray-800', 'text-white'));
+                    document.getElementById('logo-text').classList.replace('text-brand-500', 'text-white');
+                    document.querySelectorAll('.mobile-nav-icon').forEach(el => el.classList.replace('text-gray-800', 'text-white'));
+                }
+            }
+        });
+
+        // 다크 네비게이션 강제 고정 (마이페이지나 디테일 뷰 진입 시)
+        function forceDarkNav() {
+            const nav = document.getElementById('navbar');
+            nav.classList.add('bg-white', 'shadow-md');
+            nav.classList.remove('bg-transparent');
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.replace('text-white', 'text-gray-800'));
+            document.getElementById('logo-text').classList.replace('text-white', 'text-brand-500');
+            document.querySelectorAll('.mobile-nav-icon').forEach(el => el.classList.replace('text-white', 'text-gray-800'));
+        }
+
+        // 메인 화면으로 돌아가기 (특정 섹션 스크롤 지원)
         function showMain(e, targetId = null) {
             if(e) e.preventDefault();
-            currentPage = 'home';
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('mypage-content').classList.add('hidden');
             document.getElementById('detail-content').classList.add('hidden');
-            mobileMenu.classList.add('hidden');
-            updateNavbarStyle();
-
-            if(targetId) {
+            
+            window.dispatchEvent(new Event('scroll'));
+            
+            if (targetId) {
                 const target = document.querySelector(targetId);
-                if(target) window.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
+                if (target) {
+                    window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
+                }
             } else {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
+        // 마이페이지 열기
         function showMyPage(e) {
             if(e) e.preventDefault();
-            currentPage = 'mypage';
             document.getElementById('main-content').classList.add('hidden');
-            document.getElementById('mypage-content').classList.remove('hidden');
             document.getElementById('detail-content').classList.add('hidden');
-            mobileMenu.classList.add('hidden');
-            window.scrollTo(0, 0);
-            updateNavbarStyle();
+            document.getElementById('mypage-content').classList.remove('hidden');
+            window.scrollTo(0,0);
+            forceDarkNav();
         }
 
-        mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        // 이미지 요약 모달 열기
+        function openModal(title, desc, imgUrl, location, date, tag) {
+            currentModalData = {title, desc, imgUrl, location, date, tag};
+            
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerText = desc;
+            document.getElementById('modalImg').src = imgUrl;
+            document.getElementById('modalTag').innerText = tag || 'Destination';
+            
+            const commentCount = (commentsData[title] || []).length;
+            const badgeEl = document.getElementById('modalCommentBadge');
+            if (commentCount > 0) {
+                badgeEl.innerText = `💬 ${commentCount}`;
+                badgeEl.classList.remove('hidden');
+            } else {
+                badgeEl.classList.add('hidden');
+            }
 
-        function showCustomToast(message) {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-medium toast-enter';
-            toast.innerHTML = `<i class="fas fa-info-circle mr-2 text-brand-500"></i> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(100%)';
-                toast.style.transition = 'all 0.3s ease';
-                setTimeout(() => container.contains(toast) && container.removeChild(toast), 300);
-            }, 3000);
-        }
-
-        const imageModal = document.getElementById('imageModal');
-        const modalContent = document.getElementById('modalContent');
-
-        function openModal(title, desc, imgSrc, locationQuery = '', date = '', tag = '') {
-            // 현재 열린 데이터 저장 (더보기 버튼에서 사용)
-            currentPostData = { title, desc, imgSrc, locationQuery, date, tag };
-            
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalTag').textContent = tag || 'Story';
-            
-            // 모달에서는 설명(desc)을 요약본(개요)으로 잘라서 보여줌
-            const briefDesc = desc.length > 70 ? desc.substring(0, 70) + '...' : desc;
-            document.getElementById('modalDesc').textContent = briefDesc;
-            
-            document.getElementById('modalImg').src = imgSrc;
-            
             const mapContainer = document.getElementById('modalMapContainer');
             const mapFrame = document.getElementById('modalMapFrame');
-            if (locationQuery) {
-                mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(locationQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+            if (location) {
+                mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
                 mapContainer.classList.remove('hidden');
             } else {
                 mapContainer.classList.add('hidden');
-                mapFrame.src = '';
             }
-            
-            imageModal.classList.remove('hidden');
-            void imageModal.offsetWidth;
-            imageModal.classList.remove('opacity-0');
-            modalContent.classList.remove('scale-95');
-            modalContent.classList.add('scale-100');
-            document.body.style.overflow = 'hidden';
+
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; // DOM 재렌더링 트리거
+            modal.classList.remove('opacity-0');
+            document.getElementById('modalContent').classList.remove('scale-95');
+            document.getElementById('modalContent').classList.add('scale-100');
         }
 
+        // 모달 닫기
         function closeModal() {
-            imageModal.classList.add('opacity-0');
-            modalContent.classList.remove('scale-100');
-            modalContent.classList.add('scale-95');
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('opacity-0');
+            document.getElementById('modalContent').classList.remove('scale-100');
+            document.getElementById('modalContent').classList.add('scale-95');
             setTimeout(() => {
-                imageModal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
+                modal.classList.add('hidden');
             }, 300);
         }
-        
-        imageModal.addEventListener('click', (e) => { if (e.target === imageModal) closeModal(); });
 
+        // 상세보기(블로그 뷰) 열기
         function openDetailView() {
-            closeModal(); // 기존 요약 모달 닫기
-            
-            // 세부 내용 화면에 데이터 뿌리기
-            document.getElementById('detailTitle').textContent = currentPostData.title;
-            document.getElementById('detailDesc').textContent = currentPostData.desc; // 여기서는 원본(전체 글) 출력
-            document.getElementById('detailImg').src = currentPostData.imgSrc;
-            document.getElementById('detailTag').textContent = currentPostData.tag || 'Story';
-            document.getElementById('detailDate').innerHTML = `<i class="far fa-calendar-alt mr-1"></i> ${currentPostData.date || '최근'}`;
-            
-            const detailMapContainer = document.getElementById('detailMapContainer');
-            const detailMapFrame = document.getElementById('detailMapFrame');
-            if (currentPostData.locationQuery) {
-                detailMapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(currentPostData.locationQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
-                detailMapContainer.classList.remove('hidden');
-            } else {
-                detailMapContainer.classList.add('hidden');
-                detailMapFrame.src = '';
-            }
-            
-            // 화면 전환
-            currentPage = 'detail';
+            closeModal();
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('mypage-content').classList.add('hidden');
             document.getElementById('detail-content').classList.remove('hidden');
             
-            window.scrollTo(0, 0); // 화면 최상단으로 이동
-            updateNavbarStyle(); // 네비게이션 스타일 조정
-        }
+            document.getElementById('detailTitle').innerText = currentModalData.title;
+            document.getElementById('detailDesc').innerText = currentModalData.desc;
+            document.getElementById('detailImg').src = currentModalData.imgUrl;
+            document.getElementById('detailTag').innerText = currentModalData.tag || 'Destination';
+            document.getElementById('detailDate').innerText = currentModalData.date || '';
 
-        const addItemModal = document.getElementById('addItemModal');
-        const addItemModalContent = document.getElementById('addItemModalContent');
-
-        function openAddModal(type) {
-            document.getElementById('itemType').value = type;
-            document.getElementById('addItemForm').reset();
-            
-            if (type === 'destination') {
-                document.getElementById('addModalTitle').textContent = '새 여행지 추가';
-                document.getElementById('countryField').style.display = 'block';
-                document.getElementById('inputCountry').required = true;
+            const mapContainer = document.getElementById('detailMapContainer');
+            const mapFrame = document.getElementById('detailMapFrame');
+            if (currentModalData.location) {
+                mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(currentModalData.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+                mapContainer.classList.remove('hidden');
             } else {
-                document.getElementById('addModalTitle').textContent = '새 일기 추가';
-                document.getElementById('countryField').style.display = 'none';
-                document.getElementById('inputCountry').required = false;
+                mapContainer.classList.add('hidden');
             }
             
-            addItemModal.classList.remove('hidden');
-            void addItemModal.offsetWidth;
-            addItemModal.classList.remove('opacity-0');
-            addItemModalContent.classList.remove('scale-95');
-            addItemModalContent.classList.add('scale-100');
-            document.body.style.overflow = 'hidden';
+            renderComments(currentModalData.title);
+            window.scrollTo(0,0);
+            forceDarkNav();
         }
 
+        // 댓글 목록 렌더링
+        function renderComments(title) {
+            const list = document.getElementById('detailCommentList');
+            const countEl = document.getElementById('detailCommentCount');
+            const comments = commentsData[title] || [];
+
+            countEl.innerText = `(${comments.length})`;
+
+            if (comments.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-8 text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                        <i class="far fa-comment-dots text-3xl mb-2 text-gray-300"></i>
+                        <p class="text-sm">아직 작성된 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = comments.map(c => `
+                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
+                    <img src="${c.avatar}" alt="${c.author}" class="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0">
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-gray-900 text-sm">${c.author}</span>
+                            <span class="text-xs text-gray-400">${c.date}</span>
+                        </div>
+                        <p class="text-gray-700 text-sm leading-relaxed">${c.text}</p>
+                    </div>
+                    <button onclick="deleteComment('${title.replace(/'/g, "\\'")}', ${c.id})" class="text-gray-300 hover:text-red-500 text-xs p-1 transition-colors" title="삭제">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 댓글 등록 제출 처리
+        function handleCommentSubmit(e) {
+            e.preventDefault();
+            const title = currentModalData.title;
+            if (!title) return;
+
+            const authorInput = document.getElementById('commentAuthor');
+            const textInput = document.getElementById('commentText');
+
+            const author = authorInput.value.trim();
+            const text = textInput.value.trim();
+
+            if (!author || !text) return;
+
+            if (!commentsData[title]) {
+                commentsData[title] = [];
+            }
+
+            const initialChar = author.charAt(0).toUpperCase();
+            const avatarUrl = `https://placehold.co/100x100/0ea5e9/ffffff?text=${encodeURIComponent(initialChar)}`;
+
+            const newComment = {
+                id: Date.now(),
+                author: author,
+                text: text,
+                date: '방금 전',
+                avatar: avatarUrl
+            };
+
+            commentsData[title].unshift(newComment);
+            
+            textInput.value = '';
+            renderComments(title);
+            showToast('댓글이 등록되었습니다!');
+        }
+
+        // 댓글 삭제
+        function deleteComment(title, commentId) {
+            if (!commentsData[title]) return;
+            commentsData[title] = commentsData[title].filter(c => c.id !== commentId);
+            renderComments(title);
+            showToast('댓글이 삭제되었습니다.');
+        }
+
+        // 아이템 추가 모달 열기
+        function openAddModal(type) {
+            document.getElementById('itemType').value = type;
+            document.getElementById('addModalTitle').innerText = type === 'destination' ? '새 여행지 추가' : '새 일기 추가';
+            document.getElementById('countryField').style.display = type === 'destination' ? 'block' : 'none';
+            
+            const modal = document.getElementById('addItemModal');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            document.getElementById('addItemModalContent').classList.remove('scale-95');
+            document.getElementById('addItemModalContent').classList.add('scale-100');
+        }
+        
+        // 아이템 추가 모달 닫기
         function closeAddModal() {
-            addItemModal.classList.add('opacity-0');
-            addItemModalContent.classList.remove('scale-100');
-            addItemModalContent.classList.add('scale-95');
+            const modal = document.getElementById('addItemModal');
+            modal.classList.add('opacity-0');
+            document.getElementById('addItemModalContent').classList.remove('scale-100');
+            document.getElementById('addItemModalContent').classList.add('scale-95');
             setTimeout(() => {
-                addItemModal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
+                modal.classList.add('hidden');
+                document.getElementById('addItemForm').reset();
             }, 300);
         }
 
+        // 항목 폼 추가 제출 이벤트
         function handleAddItemSubmit(e) {
             e.preventDefault();
             const type = document.getElementById('itemType').value;
             const title = document.getElementById('inputTitle').value;
+            const country = document.getElementById('inputCountry').value || 'Unknown';
+            const location = document.getElementById('inputLocation').value || 'Unknown Location';
             const date = document.getElementById('inputDate').value;
             const image = document.getElementById('inputImage').value;
             const desc = document.getElementById('inputDesc').value;
-            const location = document.getElementById('inputLocation').value;
             
             if (type === 'destination') {
-                const country = document.getElementById('inputCountry').value;
-                const newItem = { title, country, date, image, desc, location };
-                const saved = JSON.parse(localStorage.getItem('myDestinations') || '[]');
-                saved.push(newItem);
-                localStorage.setItem('myDestinations', JSON.stringify(saved));
-                renderDestination(newItem);
-                showCustomToast('새로운 여행지가 갤러리에 추가되었습니다.');
+                const grid = document.getElementById('destinations-grid');
+                const html = `
+                    <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer group destination-item" onclick="openModal('${title}', '${desc.replace(/\n/g, ' ')}', '${image}', '${location}', '${date}', '${country}')">
+                        <div class="h-64 image-hover-zoom relative">
+                            <img src="${image}" alt="${title}" class="w-full h-full object-cover">
+                            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-700 shadow-sm"><i class="fas fa-map-marker-alt mr-1"></i>${location.split(',')[0]}</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">${country}</span>
+                                <span class="text-sm text-gray-500"><i class="far fa-calendar-alt mr-1"></i> ${date}</span>
+                            </div>
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">${title}</h4>
+                            <p class="text-gray-600 line-clamp-2">${desc}</p>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('afterbegin', html);
             } else {
-                const newItem = { title, date, image, desc, location, country: 'Story' };
-                const saved = JSON.parse(localStorage.getItem('myJournals') || '[]');
-                saved.push(newItem);
-                localStorage.setItem('myJournals', JSON.stringify(saved));
-                renderJournal(newItem);
-                showCustomToast('새로운 여행 일기가 추가되었습니다.');
+                const list = document.getElementById('journal-list');
+                const html = `
+                    <article class="journal-item flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="sm:w-2/5 h-48 sm:h-auto overflow-hidden relative cursor-pointer" onclick="openModal('${title}', '${desc.replace(/\n/g, ' ')}', '${image}', '${location}', '${date}', 'Travel Stories')">
+                            <img src="${image}" alt="${title}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                            <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white"><i class="fas fa-map-marker-alt mr-1"></i>${location.split(',')[0]}</div>
+                        </div>
+                        <div class="sm:w-3/5 p-6 flex flex-col justify-center">
+                            <span class="text-xs text-gray-500 mb-2">${date} • Travel Stories</span>
+                            <h4 class="text-xl font-bold text-gray-900 mb-3 hover:text-brand-500 cursor-pointer transition-colors" onclick="openModal('${title}', '${desc.replace(/\n/g, ' ')}', '${image}', '${location}', '${date}', 'Travel Stories')">${title}</h4>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-3">${desc}</p>
+                        </div>
+                    </article>
+                `;
+                list.insertAdjacentHTML('afterbegin', html);
             }
             
             closeAddModal();
-            showMain(null, type === 'destination' ? '#destinations' : '#journal');
+            showToast('성공적으로 추가되었습니다!');
+            showMain();
         }
 
-        function renderDestination(item) {
-            const grid = document.getElementById('destinations-grid');
-            const safeTitle = item.title.replace(/'/g, "\\'");
-            const safeDesc = item.desc.replace(/'/g, "\\'");
-            const safeLocation = item.location ? item.location.replace(/'/g, "\\'") : '';
-            const safeDate = item.date.replace(/'/g, "\\'");
-            const safeTag = item.country.replace(/'/g, "\\'");
+        // 토스트 알림 표시
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast-enter bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3';
+            toast.innerHTML = `<i class="fas fa-check-circle text-green-400"></i><span>${message}</span>`;
+            container.appendChild(toast);
             
-            const locationBadge = item.location ? `<div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-700 shadow-sm"><i class="fas fa-map-marker-alt mr-1"></i>${item.location}</div>` : '';
-            
-            const html = `
-                <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer group destination-item" onclick="openModal('${safeTitle}', '${safeDesc}', '${item.image}', '${safeLocation}', '${safeDate}', '${safeTag}')">
-                    <div class="h-64 image-hover-zoom relative">
-                        <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x600/e2e8f0/64748b?text=Image+Not+Found'">
-                        ${locationBadge}
-                    </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">${item.country}</span>
-                            <span class="text-sm text-gray-500"><i class="far fa-calendar-alt mr-1"></i> ${item.date}</span>
-                        </div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-2">${item.title}</h4>
-                        <p class="text-gray-600 line-clamp-2">${item.desc}</p>
-                    </div>
-                </div>
-            `;
-            grid.insertAdjacentHTML('afterbegin', html);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
-        function renderJournal(item) {
-            const list = document.getElementById('journal-list');
-            const safeTitle = item.title.replace(/'/g, "\\'");
-            const safeDesc = item.desc.replace(/'/g, "\\'");
-            const safeLocation = item.location ? item.location.replace(/'/g, "\\'") : '';
-            const safeDate = item.date.replace(/'/g, "\\'");
-            
-            const html = `
-                <article class="journal-item flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                    <div class="sm:w-2/5 h-48 sm:h-auto overflow-hidden relative cursor-pointer" onclick="openModal('${safeTitle}', '${safeDesc}', '${item.image}', '${safeLocation}', '${safeDate}', 'Travel Story')">
-                        <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/600x600/e2e8f0/64748b?text=Image+Not+Found'">
-                        ${item.location ? `<div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white"><i class="fas fa-map-marker-alt mr-1"></i>${item.location}</div>` : ''}
-                    </div>
-                    <div class="sm:w-3/5 p-6 flex flex-col justify-center">
-                        <span class="text-xs text-gray-500 mb-2">${item.date} • New Post</span>
-                        <h4 class="text-xl font-bold text-gray-900 mb-3 hover:text-brand-500 cursor-pointer transition-colors" onclick="openModal('${safeTitle}', '${safeDesc}', '${item.image}', '${safeLocation}', '${safeDate}', 'Travel Story')">${item.title}</h4>
-                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">${item.desc}</p>
-                    </div>
-                </article>
-            `;
-            list.insertAdjacentHTML('afterbegin', html);
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedDestinations = JSON.parse(localStorage.getItem('myDestinations') || '[]');
-            savedDestinations.reverse().forEach(item => renderDestination(item));
-            
-            const savedJournals = JSON.parse(localStorage.getItem('myJournals') || '[]');
-            savedJournals.reverse().forEach(item => renderJournal(item));
+        // 모바일 메뉴 토글
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
         });
 
-        const searchOverlay = document.getElementById('searchOverlay');
-        const searchInput = document.getElementById('searchInput');
-
+        // 검색 오버레이 제어
         function openSearch() {
-            if(currentPage !== 'home') showMain();
-            searchOverlay.classList.remove('hidden');
-            void searchOverlay.offsetWidth;
-            searchOverlay.classList.remove('-translate-y-full');
-            searchInput.value = '';
-            filterPosts('');
-            setTimeout(() => searchInput.focus(), 300);
-            mobileMenu.classList.add('hidden');
+            const overlay = document.getElementById('searchOverlay');
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth;
+            overlay.classList.remove('-translate-y-full');
+            document.getElementById('searchInput').focus();
         }
-
+        
         function closeSearch() {
-            searchOverlay.classList.add('-translate-y-full');
-            setTimeout(() => searchOverlay.classList.add('hidden'), 300);
+            const overlay = document.getElementById('searchOverlay');
+            overlay.classList.add('-translate-y-full');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300);
         }
-
-        searchInput.addEventListener('input', (e) => filterPosts(e.target.value.toLowerCase()));
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const query = e.target.value.trim();
-                closeSearch();
-                if (query) {
-                    showCustomToast(`'${query}' 검색 완료`);
-                    const target = document.querySelector('#destinations');
-                    if (target) window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
-                }
-            }
-        });
-
-        function filterPosts(query) {
-            document.querySelectorAll('.destination-item').forEach(item => {
-                item.style.display = item.textContent.toLowerCase().includes(query) ? '' : 'none';
-            });
-            document.querySelectorAll('.journal-item').forEach(item => {
-                item.style.display = item.textContent.toLowerCase().includes(query) ? '' : 'none';
-            });
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                if (!imageModal.classList.contains('hidden')) closeModal();
-                if (!addItemModal.classList.contains('hidden')) closeAddModal();
-                if (!searchOverlay.classList.contains('hidden')) closeSearch();
-            }
-        });
     </script>
 </body>
 </html>
